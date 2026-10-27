@@ -3,9 +3,9 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black?style=flat&logo=vercel)](https://durian-omega.vercel.app/)
 
-A real-time web simulation representing the operator display for **Tadashi NiCv-Dr-Sorter evo Gen1**, an automated durian quality sorting system (NIR spectroscopy + Computer Vision) developed for the Chulalongkorn University Case Competition.
+A real-time web simulation representing the operator display for **Tadashi NiCv-Dr-Sorter evo Gen1**, an automated durian quality sorting system (NIR spectroscopy + Computer Vision) developed for the Chulalongkorn University Case Competition / Hult Prize Chula 2027.
 
-The system inspects durians to accept export-quality fruit and reject immature or defective fruit.
+The system inspects incoming durians on the conveyor line at export packhouses (Lhong) to accept export-grade fruit and reject immature or defective fruit.
 
 🔗 **Live Demo:** [https://durian-omega.vercel.app/](https://durian-omega.vercel.app/)  
 🔗 **3D CAD Model:** [Autodesk Fusion 360](https://a360.co/3QATuCF)
@@ -18,23 +18,22 @@ The interface simulates the 5×8" embedded touchscreen monitor on the sorting ma
 
 ### 1. Overview Counters
 - **Total:** Total number of durians scanned.
-- **Approved:** Fruits that passed inspection (**Ripe** or **Unripe** with acceptable Dry Matter).
+- **Approved:** Fruits that passed inspection (**Mature** with legal Dry Matter $\ge 32.0\%$ and clear CV visual check).
 - **Neglected:** Fruits rejected by the system (**Immature** or **Defect**).
 
 ### 2. Quality Analysis
 - **Acceptance Rate (%):** Percentage of approved fruits out of total scanned.
-- **Defect Rate (%):** Percentage of rejected defective fruits.
-- **Avg Dry Matter (%):** Running average of fruit dry matter content (export standard $\ge 32\%$).
-- **Avg Sugar Level (°Bx):** Running average sweetness level in degrees Brix.
+- **Defect Rate (%):** Percentage of rejected defective fruits (CV detected).
+- **Avg Dry Matter (%):** Running average of fruit dry matter content (Thai export standard TAS 3-2556 $\ge 32\%$).
+- **Avg Sugar Level (°Bx):** Running average soluble solids content in degrees Brix.
 
 ### 3. Current Detection Panel
 - **Sample Number:** Current item counter (`Sample #...`).
 - **Timestamp:** Real-time date and timestamp of detection.
-- **Maturity Badge:** Color-coded classification tag:
-  - `Ripe` — Approved for retail/immediate consumption.
-  - `Unripe` — Approved for export (ripens during transit).
-  - `Immature` — **Rejected** (will not ripen properly).
-  - `Defect` — **Rejected** (surface defects, pest damage, deformity).
+- **Classification Badge:** Color-coded 3-class sorting decision:
+  - `Mature` — **Approved** (Meets export standard: NIR Dry Matter $\ge 32.0\%$, CV clear).
+  - `Immature` — **Neglected** (Failed maturity: NIR Dry Matter $< 32.0\%$; will never ripen properly).
+  - `Defect` — **Neglected** (CV flagged surface defects, pest damage, black mold, or deformity).
 - **Dry Matter & Sugar Level:** Numerical values for the current fruit.
 - **Fruit Visualizer:** Animated graphic triggered on each new detection.
 
@@ -52,7 +51,7 @@ No installation or build tools required:
 1. Clone the repository:
    ```bash
    git clone https://github.com/JustAPythonLover/durian.git
-   cd durian
+   cd durian/web
    ```
 2. Open `index.html` directly in your browser, or serve with Python:
    ```bash

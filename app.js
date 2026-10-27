@@ -39,9 +39,13 @@
   };
 
   // ===== CONSTANTS =====
-  const MATURITY_TYPES = ['Defect', 'Immature', 'Unripe', 'Ripe'];
-  const APPROVED_TYPES = ['Unripe', 'Ripe'];
-  const NEGLECTED_TYPES = ['Defect', 'Immature'];
+  // Tadashi NiCv-Dr-Sorter classification categories:
+  // - Mature: Approved export grade (NIR Dry Matter >= 32.0% per TAS 3-2556, CV Clear)
+  // - Immature: Neglected (NIR Dry Matter < 32.0% unripe / premature fruit)
+  // - Defect: Neglected (CV flagged external defect, pests, mold, deformity)
+  const CLASSIFICATION_TYPES = ['Mature', 'Immature', 'Defect'];
+  const APPROVED_TYPES = ['Mature'];
+  const NEGLECTED_TYPES = ['Immature', 'Defect'];
 
   // ===== HELPERS =====
   function randomBetween(min, max) {
@@ -63,39 +67,37 @@
     return date.toISOString().replace('T', ' ').substring(0, 19);
   }
 
-  // Generate realistic durian data based on maturity
+  // Generate realistic durian data based on packhouse sorting distribution
   function generateDurianData() {
-    // Weight distribution: Ripe 35%, Unripe 30%, Immature 20%, Defect 15%
+    // Weight distribution: Mature 70%, Immature 15%, Defect 15%
     const rand = Math.random();
-    let maturity;
-    if (rand < 0.35) maturity = 'Ripe';
-    else if (rand < 0.65) maturity = 'Unripe';
-    else if (rand < 0.85) maturity = 'Immature';
-    else maturity = 'Defect';
+    let classification;
+    if (rand < 0.70) classification = 'Mature';
+    else if (rand < 0.85) classification = 'Immature';
+    else classification = 'Defect';
 
     let dryMatter, sugarLevel;
 
-    switch (maturity) {
-      case 'Ripe':
-        dryMatter = randomBetween(30, 38);
-        sugarLevel = randomBetween(28, 36);
-        break;
-      case 'Unripe':
-        dryMatter = randomBetween(24, 31);
-        sugarLevel = randomBetween(18, 26);
+    switch (classification) {
+      case 'Mature':
+        // Thai standard TAS 3-2556 for Monthong: DM >= 32.0%
+        dryMatter = randomBetween(32.0, 38.5);
+        sugarLevel = randomBetween(14.0, 22.0); // Firm export brix stage
         break;
       case 'Immature':
-        dryMatter = randomBetween(18, 25);
-        sugarLevel = randomBetween(10, 18);
+        // Below legal maturity standard (DM < 32.0%)
+        dryMatter = randomBetween(20.0, 31.4);
+        sugarLevel = randomBetween(8.0, 14.0);
         break;
       case 'Defect':
-        dryMatter = randomBetween(12, 28);
-        sugarLevel = randomBetween(5, 22);
+        // External defect flagged by CV (DM can vary across harvested fruit)
+        dryMatter = randomBetween(26.0, 35.0);
+        sugarLevel = randomBetween(10.0, 20.0);
         break;
     }
 
     return {
-      maturity,
+      classification,
       dryMatter: Math.round(dryMatter * 10) / 10,
       sugarLevel: Math.round(sugarLevel * 10) / 10,
     };
@@ -126,8 +128,8 @@
       return;
     }
 
-    const approved = state.records.filter(r => APPROVED_TYPES.includes(r.maturity)).length;
-    const defects = state.records.filter(r => r.maturity === 'Defect').length;
+    const approved = state.records.filter(r => APPROVED_TYPES.includes(r.classification)).length;
+    const defects = state.records.filter(r => r.classification === 'Defect').length;
     const avgDM = state.records.reduce((sum, r) => sum + r.dryMatter, 0) / total;
     const avgSL = state.records.reduce((sum, r) => sum + r.sugarLevel, 0) / total;
 
@@ -139,8 +141,8 @@
 
   function updateOverviewCounts() {
     const total = state.records.length;
-    const approved = state.records.filter(r => APPROVED_TYPES.includes(r.maturity)).length;
-    const neglected = state.records.filter(r => NEGLECTED_TYPES.includes(r.maturity)).length;
+    const approved = state.records.filter(r => APPROVED_TYPES.includes(r.classification)).length;
+    const neglected = state.records.filter(r => NEGLECTED_TYPES.includes(r.classification)).length;
 
     dom.totalCount.textContent = total;
     dom.approvedCount.textContent = approved;
@@ -160,9 +162,9 @@
     // Time
     dom.timeValue.textContent = formatDateTime(record.timestamp);
 
-    // Maturity badge
-    dom.maturityBadge.textContent = record.maturity;
-    dom.maturityBadge.className = 'maturity-badge ' + record.maturity.toLowerCase();
+    // Classification badge
+    dom.maturityBadge.textContent = record.classification;
+    dom.maturityBadge.className = 'maturity-badge ' + record.classification.toLowerCase();
     // Trigger pop animation
     dom.maturityBadge.classList.add('pop');
     setTimeout(() => dom.maturityBadge.classList.remove('pop'), 500);
@@ -185,7 +187,8 @@
     const record = {
       sampleId: state.sampleCounter,
       timestamp: new Date(),
-      maturity: data.maturity,
+      classification: data.classification,
+      maturity: data.classification, // Backward compatibility
       dryMatter: data.dryMatter,
       sugarLevel: data.sugarLevel,
     };
@@ -226,14 +229,14 @@
       return;
     }
 
-    const headers = ['Sample ID', 'Timestamp', 'Maturity', 'Dry Matter (%)', 'Sugar Level (°Brix)', 'Status'];
+    const headers = ['Sample ID', 'Timestamp', 'Classification', 'Dry Matter (%)', 'Sugar Level (°Brix)', 'Status'];
     const rows = state.records.map(r => [
       r.sampleId,
       formatDateTimeCSV(r.timestamp),
-      r.maturity,
+      r.classification,
       r.dryMatter,
       r.sugarLevel,
-      APPROVED_TYPES.includes(r.maturity) ? 'Approved' : 'Neglected',
+      APPROVED_TYPES.includes(r.classification) ? 'Approved' : 'Neglected',
     ]);
 
     let csvContent = headers.join(',') + '\n';
@@ -243,8 +246,8 @@
 
     // Summary footer
     const total = state.records.length;
-    const approved = state.records.filter(r => APPROVED_TYPES.includes(r.maturity)).length;
-    const neglected = state.records.filter(r => NEGLECTED_TYPES.includes(r.maturity)).length;
+    const approved = state.records.filter(r => APPROVED_TYPES.includes(r.classification)).length;
+    const neglected = state.records.filter(r => NEGLECTED_TYPES.includes(r.classification)).length;
     csvContent += '\n';
     csvContent += `Summary\n`;
     csvContent += `Total,${total}\n`;
@@ -303,7 +306,8 @@
       state.records.push({
         sampleId: state.sampleCounter,
         timestamp,
-        maturity: data.maturity,
+        classification: data.classification,
+        maturity: data.classification,
         dryMatter: data.dryMatter,
         sugarLevel: data.sugarLevel,
       });

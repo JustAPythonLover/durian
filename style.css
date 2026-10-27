@@ -36,10 +36,13 @@
   --color-total-bg: rgba(108, 92, 231, 0.08);
   --color-total-border: rgba(108, 92, 231, 0.20);
 
-  /* Maturity Colors — warm-to-cool spectrum */
+  /* Classification Colors — Mature (Approved), Immature (Neglected), Defect (Neglected) */
+  --color-mature: #27ae60;
+  --color-immature: #f39c12;
+  --color-defect: #e74c3c;
   --maturity-ripe: #27ae60;
   --maturity-unripe: #f39c12;
-  --maturity-immature: #e67e22;
+  --maturity-immature: #f39c12;
   --maturity-defect: #e74c3c;
 
   /* ─── Surfaces ─── */
@@ -514,9 +517,10 @@ body {
   transition: all var(--transition-normal);
 }
 
+.maturity-badge.mature,
 .maturity-badge.ripe {
   background: rgba(39, 174, 96, 0.10);
-  color: var(--maturity-ripe);
+  color: var(--color-mature);
   border: 1px solid rgba(39, 174, 96, 0.30);
 }
 
